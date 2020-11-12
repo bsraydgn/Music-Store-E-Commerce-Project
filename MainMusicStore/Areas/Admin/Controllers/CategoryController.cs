@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MainMusicStore.DataAccess.IMainRepository;
+﻿using MainMusicStore.DataAccess.IMainRepository;
 using MainMusicStore.Models.DbModels;
 using MainMusicStore.Utility;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +8,7 @@ namespace MainMusicStore.Areas.Admin.Controllers
 {
 
     [Area("Admin")]
-    [Authorize(Roles =ProjectContstant.Role_Admin + "," + ProjectContstant.Role_Employee)]  
+    [Authorize(Roles =ProjectContstant.Role_Admin)]  
     public class CategoryController : Controller
     {
         #region Variables

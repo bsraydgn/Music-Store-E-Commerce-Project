@@ -12,7 +12,6 @@ namespace MainMusicStore.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = ProjectContstant.Role_Admin )]
-
     public class CoverTypeController : Controller
     {
         #region Variables

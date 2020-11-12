@@ -13,7 +13,6 @@ namespace MainMusicStore.Areas.Admin.Controllers
 
     [Area("Admin")]
     [Authorize(Roles = ProjectContstant.Role_Admin)]
-
     public class CompanyController : Controller
     {
         #region Variables

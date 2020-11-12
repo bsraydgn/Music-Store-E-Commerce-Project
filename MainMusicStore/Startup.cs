@@ -69,8 +69,15 @@ namespace MainMusicStore
             {
                 options.ClientId = "128831674219-0fcppjn09fv6147crkkjeu7d4aoadfn4.apps.googleusercontent.com";
                 options.ClientSecret = "qgKt1VkJXmbLtuwEs1zbotqb";
-            }
-            );
+            });
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
 
         }
 
@@ -92,6 +99,7 @@ namespace MainMusicStore
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseSession();
 
             app.UseAuthentication();
             app.UseAuthorization();

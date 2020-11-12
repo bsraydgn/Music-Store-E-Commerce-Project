@@ -25,6 +25,7 @@ a {
     color: #0366d6;
 }
 
+
 /* remove bhrugen
     .btn-primary {
   color: #fff;
@@ -279,4 +280,8 @@ body {
   width: 100%;
   white-space: nowrap;
   line-height: 60px; /* Vertically center the text there */
+}
+
+.dataTables_info{
+    color: #fff;
 }

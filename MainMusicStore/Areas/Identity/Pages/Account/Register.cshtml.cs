@@ -119,8 +119,7 @@ namespace MainMusicStore.Areas.Identity.Pages.Account
             returnUrl = returnUrl ?? Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
-            {
-               
+            {              
                 var user = new ApplicationUser
                 {
                     UserName = Input.Email,
@@ -136,6 +135,7 @@ namespace MainMusicStore.Areas.Identity.Pages.Account
                 };
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
+
                 if (result.Succeeded)
                 {
                    
@@ -161,12 +161,11 @@ namespace MainMusicStore.Areas.Identity.Pages.Account
                     {
                         await _roleManager.CreateAsync(new IdentityRole(ProjectContstant.Role_User_Indi));
                     }
-
-                 
+               
 
                     if(user.Role==null)
                     {
-                       await _userManager.AddToRoleAsync(user, ProjectContstant.Role_Admin);
+                       await _userManager.AddToRoleAsync(user, ProjectContstant.Role_User_Indi);
 
                     }
                     else
@@ -175,6 +174,7 @@ namespace MainMusicStore.Areas.Identity.Pages.Account
                         {
                             await _userManager.AddToRoleAsync(user, ProjectContstant.Role_User_Comp);
                         }
+
                         await _userManager.AddToRoleAsync(user, user.Role);
 
                     }

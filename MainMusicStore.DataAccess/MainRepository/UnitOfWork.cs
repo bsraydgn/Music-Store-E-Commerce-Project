@@ -19,6 +19,9 @@ namespace MainMusicStore.DataAccess.MainRepository
             Product = new ProductRepository(_db);
             Company = new CompanyRepository(_db);
             ApplicationUser = new ApplicationUserRepository(_db);
+            ShoppingCart = new ShoppingCartRepository(_db);
+            OrderHeader = new OrderHeaderRepository(_db);
+            OrderDetails = new OrderDetailsRepository(_db);
 
         }
 
@@ -27,8 +30,10 @@ namespace MainMusicStore.DataAccess.MainRepository
         public ISPCallRepository sp_call { get; private set; }
         public ICoverTypeRepository CoverType { get; private set; }
         public IProductRepository Product { get; private set; }
-
+        public IShoppingCartRepository ShoppingCart { get; private set; }
         public IApplicationUserRepository ApplicationUser { get; private set; }
+        public IOrderHeaderRepository OrderHeader { get; private set; }
+        public IOrderDetailsRepository OrderDetails { get; private set; }
 
 
 

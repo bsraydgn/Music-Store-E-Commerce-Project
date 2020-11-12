@@ -15,12 +15,11 @@ namespace MainMusicStore.Models.DbModels
         public string PostaCode { get; set; }
 
         public int? CompanyId { get; set; }
-
         [ForeignKey("CompanyId")]
         public Company Company { get; set; }
 
 
-        [NotMapped]
+        [NotMapped] 
         public string Role { get; set; }
 
     }
