@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Stripe;
 
 namespace MainMusicStore.Areas.Customer.Controllers
 {
@@ -24,6 +25,7 @@ namespace MainMusicStore.Areas.Customer.Controllers
         private readonly IEmailSender _emailSender;
         private readonly UserManager<IdentityUser> _userManager;
 
+        [BindProperty]
         public ShoppingCartVM ShoppingCartVM { get; set; }
         public CartController(IUnitOfWork uow, IEmailSender emailSender, UserManager<IdentityUser> userManager)
         {
@@ -107,6 +109,7 @@ namespace MainMusicStore.Areas.Customer.Controllers
                // return Json(true);
                 return RedirectToAction("Index");
             
+
         }
 
         public IActionResult Minus(int cartId)
@@ -168,6 +171,92 @@ namespace MainMusicStore.Areas.Customer.Controllers
             ShoppingCartVM.OrderHeader.PostCode = ShoppingCartVM.OrderHeader.ApplicationUser.PostaCode;
 
             return View(ShoppingCartVM);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("Summary")]
+        public IActionResult SummmaryPost(string stripeToken)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            ShoppingCartVM.OrderHeader.ApplicationUser = _uow.ApplicationUser.GetFirstOrDefault(a => a.Id == claims.Value, includeProperties: "Company");
+
+            ShoppingCartVM.ListCart = _uow.ShoppingCart.GetAll(s => s.ApplicationUserId == claims.Value, includeProperties: "Product");
+
+            ShoppingCartVM.OrderHeader.PaymentStatus = ProjectContstant.PaymentStatusPending;
+            ShoppingCartVM.OrderHeader.OrderStatus = ProjectContstant.StatusPending;
+            ShoppingCartVM.OrderHeader.ApplicationUserId = claims.Value;
+            ShoppingCartVM.OrderHeader.OrderDate = DateTime.Now;
+
+            _uow.OrderHeader.Add(ShoppingCartVM.OrderHeader);
+            _uow.Save();
+
+            List<OrderDetails> orderDetailsList = new List<OrderDetails>();
+            foreach (var orderDetail in ShoppingCartVM.ListCart)
+            {
+                orderDetail.Price = ProjectContstant.GetPriceBaseOnQuantity(orderDetail.Count, orderDetail.Product.Price, orderDetail.Product.Price50, orderDetail.Product.Price100);
+
+                OrderDetails oDetails = new OrderDetails()
+                {
+                    ProductId = orderDetail.ProductId,
+                    OrderId = ShoppingCartVM.OrderHeader.Id,
+                    Price = orderDetail.Price,
+                    Count = orderDetail.Count
+                };
+                ShoppingCartVM.OrderHeader.OrderTotal += oDetails.Count * oDetails.Price;
+                _uow.OrderDetails.Add(oDetails);
+            }
+            _uow.ShoppingCart.RemoveRange(ShoppingCartVM.ListCart);
+          
+            HttpContext.Session.SetInt32(ProjectContstant.shoppingCart, 0);
+
+
+            if (stripeToken==null)
+            {
+                ShoppingCartVM.OrderHeader.PaymentDueDate = DateTime.Now.AddDays(30);
+                ShoppingCartVM.OrderHeader.PaymentStatus = ProjectContstant.PaymentStatusDelayedPayment;
+                ShoppingCartVM.OrderHeader.OrderStatus = ProjectContstant.StatusApproved;
+            }
+            else
+            {
+                var options = new ChargeCreateOptions
+                {
+                    Amount = Convert.ToInt32(ShoppingCartVM.OrderHeader.OrderTotal * 100),
+                    Currency = "usd",
+                    Description = "Order Id:" + ShoppingCartVM.OrderHeader.Id,
+                    Source = stripeToken
+                };
+
+                var service = new ChargeService();
+                Charge charge = service.Create(options);
+
+                if(charge.BalanceTransactionId==null)
+                {
+                    ShoppingCartVM.OrderHeader.PaymentStatus = ProjectContstant.PaymentStatusRejected;
+                }
+                else
+                {
+                    ShoppingCartVM.OrderHeader.TransactionId = charge.BalanceTransactionId;
+                }
+
+                if(charge.Status.ToLower()=="succeeded")
+                {
+                    ShoppingCartVM.OrderHeader.PaymentStatus = ProjectContstant.PaymentStatusApproved;
+                    ShoppingCartVM.OrderHeader.OrderStatus = ProjectContstant.StatusApproved;
+                    ShoppingCartVM.OrderHeader.PaymentDate = DateTime.Now;
+                }
+            }
+            _uow.Save();
+
+            return RedirectToAction("OrderConfirmation", "Cart", new { id = ShoppingCartVM.OrderHeader.Id });
+        }
+
+
+
+        public IActionResult OrderConfirmation(int id)
+        {
+            return View(id);
         }
 
     }
